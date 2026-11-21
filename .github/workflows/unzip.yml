@@ -1,0 +1,21 @@
+name: unzip
+on:
+  workflow_dispatch:
+  push:
+    paths: ['content-hub-egypt.zip']
+permissions:
+  contents: write
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          unzip -q content-hub-egypt.zip -d /tmp/x
+          cp -a /tmp/x/content-hub/. .
+          rm content-hub-egypt.zip
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add -A
+          git commit -m "Add project files"
+          git push
