@@ -16,7 +16,7 @@ const LK: any = { creator: [['/profile', 'حسابي والحسابات الاج
 export async function More({ role }: any) {
   const en = (await getLang()) === 'en'
   return <><h2>{en ? 'More' : 'المزيد'}</h2><div className="card list">{LK[role].map(([h, a, e]: any) => <Link key={h} href={'/' + role + h}>{en ? e : a} <span>›</span></Link>)}</div>
-    {role === 'admin' ? <SupportEdit current={await phone()} /> : <Support />}<SignOut /></>
+    {role === 'admin' ? <><SupportEdit current={await phone()} /><div className="card"><h3>تصدير بيانات (CSV)</h3><p className="mu">نسخة احتياطية إضافية ومفيدة للمحاسبة.</p><div className="row">{['wallet_transactions', 'withdrawal_requests', 'payment_requests', 'campaigns', 'submissions', 'profiles'].map(t => <a key={t} className="btn o" href={'/admin/export?t=' + t}>{t}</a>)}</div></div></> : <Support />}<SignOut /></>
 }
 export async function Settings({ role }: any) {
   const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
