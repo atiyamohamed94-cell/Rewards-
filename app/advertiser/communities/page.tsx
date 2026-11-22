@@ -1,2 +1,2 @@
-import { Communities } from '@/components/Pages'
-export default async function P({ searchParams }: any) { return <Communities sp={await searchParams} /> }
+import { GroupsList } from '@/components/Groups'
+export default function P() { return <GroupsList role="advertiser" /> }
