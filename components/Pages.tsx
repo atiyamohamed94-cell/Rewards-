@@ -13,7 +13,7 @@ export async function Profile({ kind }: any) {
   const { data: p } = await s.from('profiles').select('*').eq('id', user!.id).single()
   const { data: x } = await s.from(kind === 'advertiser' ? 'advertiser_profiles' : 'creator_profiles').select('*').eq('user_id', user!.id).maybeSingle()
   const { data: so } = await s.from('social_accounts').select('*').eq('user_id', user!.id)
-  return <><h2>حسابي</h2><p className="mu">{p?.email} · الدور: {p?.role} · التوثيق: {x?.verified ? 'موثّق ✓' : 'غير موثّق'}</p>
+  return <><h2>حسابي</h2>{p?.avatar_url && <img src={p.avatar_url} alt="" style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover' }} />}<p className="mu">{p?.email} · الدور: {p?.role} · التوثيق: {x?.verified ? 'موثّق ✓' : 'غير موثّق'}</p>
     <ProfileForm p={p} x={x || {}} kind={kind} /><Avatar uid={user!.id} />
     <h3>الحسابات الاجتماعية</h3>{!so?.length && <p className="mu">لم تضف حسابات.</p>}{so?.map((a: any) => <div className="card row" key={a.id}><span>{a.platform} · {a.username}</span><Del table="social_accounts" id={a.id} /></div>)}<Socials uid={user!.id} /></>
 }

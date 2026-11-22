@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
 const sbc = createClient()
-export function useRun() { const r = useRouter(); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('')
+export export function useRun() { const r = useRouter(); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('')
   const run = async (f: () => PromiseLike<any>, ok = 'تم الحفظ') => { setBusy(true); setMsg(''); const { error } = await f(); setBusy(false); if (error) setMsg(error.message); else { setMsg(ok); r.refresh() } }
   return { busy, msg, run } }
 export function PasswordForm() {
