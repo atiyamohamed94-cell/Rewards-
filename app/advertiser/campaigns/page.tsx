@@ -2,7 +2,7 @@ import { sb, egp } from '@/lib/server'
 import { CampaignForm, Fund, SubmitReview } from '@/components/Actions'
 const L: any = { draft: 'مسودة', pending: 'بانتظار الاعتماد', active: 'نشطة', paused: 'متوقفة', completed: 'مكتملة', rejected: 'مرفوضة', cancelled: 'ملغاة' }
 export default async function P() {
-  const s = await sb(); const { data: { user } } = await s.auth.getUser()
+  const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
   const { data: cs } = await s.from('campaigns').select('*').eq('advertiser_id', user!.id).order('created_at', { ascending: false })
   return <><h2>حملاتي</h2><CampaignForm uid={user!.id} />
     {!cs?.length && <div className="card mu">لم تنشئ حملات بعد. ابدأ بمسودة، ثم موّلها وأرسلها للاعتماد.</div>}

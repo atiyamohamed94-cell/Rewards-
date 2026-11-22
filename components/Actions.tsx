@@ -38,7 +38,7 @@ export function SubmitContent({ apps }: any) {
 }
 export function Withdraw() {
   const { busy, msg, run } = useRun(); const [amt, setAmt] = useState(''); const [m, setM] = useState('instapay'); const [d, setD] = useState(''); const [n, setN] = useState('')
-  return <div className="card"><h3>طلب سحب</h3><label>المبلغ (الحد الأدنى 50 ج.م)</label><input type="number" value={amt} onChange={e => setAmt(e.target.value)} />
+  return <div className="card"><h3>طلب سحب</h3><label>المبلغ (الحد الأدنى 50 ج.م)</label><input type="number" value={amt} onChange={e => setAmt(e.target.value)} />{+amt > 0 && <p className="mu">رسوم السحب 5%: {(+amt * 0.05).toFixed(2)} ج.م · الصافي لك: {(+amt * 0.95).toFixed(2)} ج.م</p>}
     <label>الطريقة</label><select value={m} onChange={e => setM(e.target.value)}><option value="instapay">InstaPay</option><option value="ewallet">محفظة إلكترونية</option></select>
     <label>{m === 'instapay' ? 'عنوان InstaPay' : 'رقم المحفظة'}</label><input value={d} onChange={e => setD(e.target.value)} />
     <label>اسم صاحب الحساب</label><input value={n} onChange={e => setN(e.target.value)} />
@@ -65,7 +65,7 @@ export function CampaignForm({ uid }: any) {
 }
 export function Fund({ id }: any) {
   const { busy, msg, run } = useRun(); const [a, setA] = useState('')
-  return <span><input style={{ width: 110 }} type="number" placeholder="مبلغ" value={a} onChange={e => setA(e.target.value)} />
+  return <span><input style={{ width: 110 }} type="number" placeholder="مبلغ (عمولة 15%)" value={a} onChange={e => setA(e.target.value)} />
     <button className="btn s" disabled={busy} onClick={() => run(() => sbc.rpc('fund_campaign', { p_campaign: id, p_amount: +a }), 'تم التمويل')}>تمويل</button><Msg m={msg} /></span>
 }
 export function SubmitReview({ id }: any) {

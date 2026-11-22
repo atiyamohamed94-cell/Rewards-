@@ -1,7 +1,7 @@
 import { sb, egp } from '@/lib/server'
 import { TopUp } from '@/components/Actions'
 export default async function P() {
-  const s = await sb(); const { data: { user } } = await s.auth.getUser()
+  const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
   const { data: w } = await s.from('wallets').select('*').eq('user_id', user!.id).single()
   const { data: pr } = await s.from('payment_requests').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(20)
   const { data: set } = await s.from('platform_settings').select('key,value').in('key', ['instapay_name', 'instapay_ipa', 'ewallet_number', 'cash_instructions', 'payment_methods'])

@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 export async function sb() {
@@ -9,3 +10,10 @@ export const egp = (n: any) => Number(n || 0).toLocaleString('ar-EG') + ' ج.م'
 export const monthly = (rows: any[], dk: string, vk?: string) => { const m: any = {}
   rows.forEach(r => { const k = String(r[dk] || '').slice(0, 7); if (k) m[k] = (m[k] || 0) + (vk ? Number(r[vk]) : 1) })
   return Object.entries(m).sort().slice(-12) as [string, number][] }
+
+export async function guard(role: string) {
+  const s = await sb(); const { data: { user } } = await s.auth.getUser(); if (!user) redirect('/login')
+  const { data: p } = await s.from('profiles').select('role,status').eq('id', user.id).single()
+  if (!p || p.status !== 'active') redirect('/go')
+  if (p.role !== role) redirect(p.role === 'admin' ? '/admin' : `/${p.role}/campaigns`)
+}

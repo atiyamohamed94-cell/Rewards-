@@ -1,7 +1,7 @@
 import { sb } from '@/lib/server'
 import { Rpc } from '@/components/Actions'
 export default async function P() {
-  const s = await sb(); const { data: { user } } = await s.auth.getUser()
+  const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
   const { data: cs } = await s.from('campaigns').select('id,title').eq('advertiser_id', user!.id)
   const blocks = await Promise.all((cs || []).map(async (c: any) => {
     const { data: ap } = await s.rpc('get_campaign_applicants', { p_campaign: c.id })

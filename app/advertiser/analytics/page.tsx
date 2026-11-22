@@ -1,2 +1,2 @@
 import { Analytics } from '@/components/Pages'
-export default function P() { return <Analytics role="advertiser" /> }
+export default async function P({ searchParams }: any) { return <Analytics role="advertiser" sp={await searchParams} /> }

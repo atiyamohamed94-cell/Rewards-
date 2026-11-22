@@ -2,7 +2,7 @@ import { sb, egp } from '@/lib/server'
 import { Withdraw } from '@/components/Actions'
 const W: any = { pending: 'معلّق', approved: 'تم التنفيذ', rejected: 'مرفوض', paid: 'تم الدفع' }
 export default async function P() {
-  const s = await sb(); const { data: { user } } = await s.auth.getUser()
+  const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
   const { data: w } = await s.from('wallets').select('*').eq('user_id', user!.id).single()
   const { data: tx } = await s.from('wallet_transactions').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(20)
   const { data: wr } = await s.from('withdrawal_requests').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(20)

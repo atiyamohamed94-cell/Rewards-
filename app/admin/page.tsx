@@ -1,22 +1,20 @@
+import Link from 'next/link'
 import { sb, egp } from '@/lib/server'
-import { Rpc } from '@/components/Actions'
+export const dynamic = 'force-dynamic'
 export default async function P() {
-  const s = await sb()
-  const [c, p, w, sb2, u] = await Promise.all([
-    s.from('campaigns').select('*').eq('status', 'pending'), s.from('payment_requests').select('*').eq('status', 'pending'),
-    s.from('withdrawal_requests').select('*').eq('status', 'pending'), s.from('submissions').select('id,content_url,campaign_id').eq('status', 'approved'),
-    s.from('profiles').select('role') ])
-  const signed: any = {}; for (const r of p.data || []) { const { data } = await s.storage.from('payment-proofs').createSignedUrl(r.proof_path, 300); signed[r.id] = data?.signedUrl }
-  const n = (r: string) => (u.data || []).filter((x: any) => x.role === r).length
-  return <><h2>لوحة الإدارة</h2><div className="grid"><div className="card"><div className="mu">المبدعون</div><div className="kpi">{n('creator')}</div></div><div className="card"><div className="mu">المعلنون</div><div className="kpi">{n('advertiser')}</div></div>
-    <div className="card"><div className="mu">دفعات معلّقة</div><div className="kpi">{p.data?.length || 0}</div></div><div className="card"><div className="mu">سحوبات معلّقة</div><div className="kpi">{w.data?.length || 0}</div></div></div>
-    <h3>حملات بانتظار الاعتماد</h3>{!c.data?.length && <p className="mu">لا يوجد.</p>}
-    {c.data?.map((x: any) => <div className="card row" key={x.id}><span>{x.title} · ممول {egp(x.funded_amount)}</span><span><Rpc fn="admin_review_campaign" args={{ p_id: x.id, p_decision: 'active', p_reason: null }} label="اعتماد" /> <Rpc danger fn="admin_review_campaign" args={{ p_id: x.id, p_decision: 'rejected', p_reason: 'لا تستوفي الشروط' }} label="رفض" ask="رفض الحملة؟" /></span></div>)}
-    <h3>طلبات الدفع</h3>{!p.data?.length && <p className="mu">لا يوجد.</p>}
-    {p.data?.map((x: any) => <div className="card" key={x.id}><div className="row"><span>{egp(x.amount)} · {x.method} · {x.sender_name} · مرجع {x.transaction_ref}</span>{signed[x.id] && <a className="btn o" href={signed[x.id]} target="_blank" rel="noopener noreferrer">عرض الإثبات</a>}</div>
-      <Rpc fn="admin_review_payment" args={{ p_id: x.id, p_decision: 'approved', p_approved_amount: null, p_note: null }} label="اعتماد المبلغ المطلوب" ask="تأكد أنك راجعت الإثبات وأن المبلغ وصل فعلًا. اعتماد؟" /> <Rpc danger fn="admin_review_payment" args={{ p_id: x.id, p_decision: 'rejected', p_approved_amount: null, p_note: 'تعذر التحقق من التحويل' }} label="رفض" ask="رفض الدفع؟" /></div>)}
-    <h3>طلبات السحب</h3>{!w.data?.length && <p className="mu">لا يوجد.</p>}
-    {w.data?.map((x: any) => <div className="card row" key={x.id}><span>{egp(x.amount)} · {x.payment_method} · {JSON.stringify(x.payment_details)}</span><span><Rpc fn="admin_review_withdrawal" args={{ p_id: x.id, p_decision: 'approved', p_note: null }} label="تم التحويل" ask="هل حوّلت المبلغ فعلًا؟" /> <Rpc danger fn="admin_review_withdrawal" args={{ p_id: x.id, p_decision: 'rejected', p_note: 'تعذر التنفيذ' }} label="رفض وإرجاع" ask="رفض وإرجاع المبلغ للمحفظة؟" /></span></div>)}
-    <h3>تسليمات مقبولة جاهزة للصرف</h3>{!sb2.data?.length && <p className="mu">لا يوجد.</p>}
-    {sb2.data?.map((x: any) => <div className="card row" key={x.id}><a href={x.content_url} target="_blank" rel="noopener noreferrer" className="mu">{x.content_url}</a><Rpc fn="admin_pay_submission" args={{ p_sub: x.id }} label="صرف المستحق" ask="صرف أرباح هذا التسليم حسب المشاهدات الموثّقة؟" /></div>)}</>
+  const s = await sb(); const cnt = async (t: string, f?: (q: any) => any) => { let q = s.from(t).select('id', { count: 'exact', head: true }); if (f) q = f(q); return (await q).count || 0 }
+  const [claims, camps, ready, pay, wd, disp, users] = await Promise.all([cnt('view_claims', q => q.eq('status', 'pending')), cnt('campaigns', q => q.eq('status', 'pending')), cnt('submissions', q => q.eq('status', 'approved')),
+    cnt('payment_requests', q => q.eq('status', 'pending')), cnt('withdrawal_requests', q => q.eq('status', 'pending')), cnt('disputes', q => q.eq('status', 'open')), cnt('profiles')])
+  const { data: fees } = await s.from('wallet_transactions').select('amount').eq('transaction_type', 'platform_fee').eq('status', 'completed')
+  const rev = (fees || []).reduce((a: number, f: any) => a + Number(f.amount), 0)
+  const C = ({ n, t, h }: any) => <Link href={h} className="card" style={{ borderColor: n > 0 ? 'var(--o)' : undefined }}><div className="kpi">{n}</div><div className="mu">{t}</div></Link>
+  return <><h2>لوحة الإدارة</h2><p className="mu">الأرقام البرتقالية تعني شغلًا ينتظرك. اضغط على أي بطاقة.</p>
+    <div className="grid"><C n={claims} t="طلبات توثيق مشاهدات" h="/admin/claims" /><C n={camps} t="حملات بانتظار الاعتماد" h="/admin/review" /><C n={ready} t="تسليمات مقبولة (للصرف)" h="/admin/review" />
+      <C n={pay} t="طلبات شحن" h="/admin/finance" /><C n={wd} t="طلبات سحب" h="/admin/finance" /><C n={disp} t="طلبات ونزاعات مفتوحة" h="/admin/disputes" /></div>
+    <div className="grid"><div className="card"><div className="mu">إيرادات المنصة (العمولات)</div><div className="kpi g">{egp(rev)}</div></div><Link href="/admin/users" className="card"><div className="kpi">{users}</div><div className="mu">إجمالي المستخدمين</div></Link></div>
+    <h3>دليل الإدارة: ماذا يفعل كل قسم؟</h3>
+    {[['المراجعة', 'اعتماد الحملات الجديدة، وصرف أرباح التسليمات المقبولة.'], ['المالية', 'مراجعة إثباتات الشحن وطلبات السحب (حوّل المبلغ الصافي يدويًا ثم اضغط تم)، وسجل العمليات المالية.'], ['طلبات توثيق المشاهدات', 'المبدع يرسل الرقم وصورة الإحصائيات، قارنها بالفيديو واعتمد أو ارفض. بعد الاعتماد اذهب للمراجعة واصرف.'],
+      ['المستخدمون', 'بحث، توثيق الحسابات، وإيقاف أو تفعيل حساب.'], ['كل الحملات', 'متابعة كل الحملات وإيقاف أو استئناف أي حملة.'], ['الطلبات والنزاعات', 'طلبات تغيير نوع الحساب وأي بلاغات من المستخدمين.'],
+      ['الأسئلة الشائعة', 'ما تكتبه يظهر في صفحة FAQ للجميع.'], ['إعدادات المنصة', 'أرقام التحويل وطرق الدفع ورقم الدعم.'], ['سجل العمليات', 'من فعل ماذا ومتى، لمراجعة أي مشكلة.']].map(([t, d]) => <details className="card" key={t}><summary><b>{t}</b></summary><p className="mu">{d}</p></details>)}
+    <p className="mu">قواعد أمان: لا يمكنك اعتماد دفعة أو سحب خاص بحسابك، وكل قرار مالي يُسجَّل باسمك.</p></>
 }

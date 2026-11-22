@@ -7,14 +7,11 @@ export async function middleware(req: NextRequest) {
       l.forEach(({ name, value }) => req.cookies.set(name, value))
       res = NextResponse.next({ request: req })
       l.forEach(({ name, value, options }) => res.cookies.set(name, value, options)) } } })
-  const area = ['creator', 'advertiser', 'admin'].find(a => req.nextUrl.pathname.startsWith('/' + a))
-  if (!area) return res
-  const { data: { user } } = await s.auth.getUser()
-  const go = (p: string) => NextResponse.redirect(new URL(p, req.url))
-  if (!user) return go('/login')
-  const { data: p } = await s.from('profiles').select('role,status').eq('id', user.id).single()
-  if (!p || p.status !== 'active') return go('/login')
-  if (p.role !== area) return go('/' + p.role + (p.role === 'admin' ? '' : '/campaigns'))
+  const { data: { session } } = await s.auth.getSession()   // قراءة محلية من الكوكي بدون اتصال بالشبكة، وتجديد الجلسة عند الحاجة
+  const p = req.nextUrl.pathname
+  const go = (to: string) => NextResponse.redirect(new URL(to, req.url))
+  if (['/creator', '/advertiser', '/admin'].some(a => p.startsWith(a))) return session ? res : go('/login')
+  if (session) return go('/go')   // مسجّل دخول بالفعل: ادخل للوحتك مباشرة
   return res
 }
-export const config = { matcher: ['/creator/:path*', '/advertiser/:path*', '/admin/:path*'] }
+export const config = { matcher: ['/', '/login', '/register', '/creator/:path*', '/advertiser/:path*', '/admin/:path*'] }
