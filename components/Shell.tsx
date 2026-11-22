@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Logo from './Logo'
+import { RefClaim } from './Ref'
 import { LangToggle, useLang } from './Lang'
 import { createClient } from '@/lib/client'
 const T: any = {
@@ -17,7 +18,7 @@ export default function Shell({ role, children }: any) {
     f(); const iv = setInterval(f, 30000); return () => { on = false; clearInterval(iv) } }, [p])
   return <><header className="top"><Link href={'/' + role + T[role][0][0]}><Logo /></Link>
     <span style={{ display: 'flex', gap: 14, alignItems: 'center' }}><LangToggle /><Link href={'/' + role + '/notifications'} aria-label="notifications" style={{ position: 'relative' }}>🔔{n > 0 && <span className="badge" style={{ position: 'absolute', top: -6, insetInlineEnd: -10, background: 'var(--m)', color: '#fff' }}>{n > 9 ? '9+' : n}</span>}</Link></span></header>
-    <div className="wrap app">{children}</div>
+    <RefClaim /><div className="wrap app">{children}</div>
     <nav className="tabs">{T[role].map(([h, i, a, e]: any) => { const href = '/' + role + h; const on = h === '' ? p === href : p.startsWith(href)
       return <Link key={h} href={href} className={on ? 'on' : ''}><span>{i}</span>{lang === 'en' ? e : a}</Link> })}</nav></>
 }
