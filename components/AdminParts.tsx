@@ -5,10 +5,12 @@ const ST: any = { pending: 'بانتظار المراجعة', approved: 'معت�
 export async function ClaimsList({ role, status = 'pending' }: any) {
   const s = await sb()
   const { data } = await s.from('view_claims').select('*,submissions(content_url,paid_views,campaigns(title,advertiser_id))').eq('status', status).order('created_at', { ascending: false }).limit(40)
-  const urls: any = {}; for (const c of data || []) { const { data: u } = await s.storage.from('view-proofs').createSignedUrl(c.proof_path, 300); urls[c.id] = u?.signedUrl }
+  const urls: any = {}; const own: any = {}; for (const c of data || []) { const { data: vs } = await s.rpc('creator_verified_socials', { p_creator: c.creator_id }); own[c.id] = vs || [] }
+  for (const c of data || []) { const { data: u } = await s.storage.from('view-proofs').createSignedUrl(c.proof_path, 300); urls[c.id] = u?.signedUrl }
   return <>{!data?.length && <div className="card mu">لا توجد طلبات.</div>}{data?.map((c: any) => <div className="card" key={c.id}>
     <div className="row"><b>{c.submissions?.campaigns?.title}</b><span className="badge">{ST[c.status]}</span></div>
     <p>المشاهدات المطلوبة: <b>{Number(c.claimed_views).toLocaleString('ar-EG')}</b> <span className="mu">(المحتسب سابقًا {Number(c.submissions?.paid_views || 0).toLocaleString('ar-EG')})</span></p>
+    <p className="mu">{own[c.id]?.length ? <>✓ حسابات موثّقة للمبدع: {own[c.id].map((a: any) => a.platform + ' @' + a.username).join(' · ')}</> : '⚠️ المبدع ليس لديه حساب موثّق الملكية، تأكد من اسم الحساب في صورة الإحصائيات.'}</p>
     <p className="row"><a className="btn o" href={c.submissions?.content_url} target="_blank" rel="noopener noreferrer">فتح الفيديو</a>{urls[c.id] && <a className="btn o" href={urls[c.id]} target="_blank" rel="noopener noreferrer">صورة الإحصائيات</a>}</p>
     {c.advertiser_check && <p className="mu">رأي المعلن: <b>{c.advertiser_check === 'confirmed' ? (c.status === 'approved' ? 'اعتمد وصُرف المستحق ✓' : 'يؤكد الرقم ✓') : 'يعترض ✗'}</b> {c.advertiser_note}</p>}
     {c.status === 'pending' && role === 'advertiser' && <div className="row"><Rpc fn="advertiser_review_claim" args={{ p_id: c.id, p_decision: 'approved', p_note: null }} label="اعتماد وصرف المستحق" ask="هل قارنت الرقم بالمشاهدات الظاهرة على الفيديو؟ سيُصرف المستحق للمبدع من ميزانية حملتك." /><Rpc danger fn="advertiser_review_claim" args={{ p_id: c.id, p_decision: 'rejected', p_note: 'الرقم لا يطابق الظاهر على الفيديو' }} label="رفض" ask="رفض الطلب؟" /></div>}

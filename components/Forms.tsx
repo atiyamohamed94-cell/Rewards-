@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
 const sbc = createClient()
-export export function useRun() { const r = useRouter(); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('')
+export function useRun() { const r = useRouter(); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('')
   const run = async (f: () => PromiseLike<any>, ok = 'تم الحفظ') => { setBusy(true); setMsg(''); const { error } = await f(); setBusy(false); if (error) setMsg(error.message); else { setMsg(ok); r.refresh() } }
   return { busy, msg, run } }
 export function PasswordForm() {
@@ -37,7 +37,7 @@ export function ClaimForm({ sid, uid }: any) {
   const { busy, msg, run } = useRun(); const [v, setV] = useState(''); const [f, setF] = useState<File | null>(null)
   return <div style={{ borderTop: '1px solid var(--ln)', marginTop: 10, paddingTop: 10 }}><b>طلب توثيق مشاهدات</b>
     <input type="number" placeholder="عدد المشاهدات الحالي" value={v} onChange={e => setV(e.target.value)} />
-    <label>صورة من إحصائيات حسابك (Analytics) تُظهر الرقم</label><input type="file" accept="image/*" onChange={e => setF(e.target.files?.[0] || null)} />
+    <label>صورة من إحصائيات حسابك (Analytics) تُظهر الرقم واسم حسابك والفيديو</label><input type="file" accept="image/*" onChange={e => setF(e.target.files?.[0] || null)} />
     <button className="btn" disabled={busy} onClick={() => run(async () => { if (!f || !(+v > 0)) return { error: { message: 'أدخل العدد وأرفق الصورة' } }; if (f.size > 5e6) return { error: { message: 'الصورة أكبر من 5MB' } }
       const path = `${uid}/${Date.now()}-${f.name.replace(/[^\w.]/g, '_')}`; const up = await sbc.storage.from('view-proofs').upload(path, f); if (up.error) return up
       return sbc.rpc('submit_view_claim', { p_submission: sid, p_views: Math.floor(+v), p_proof: path }) }, 'تم إرسال الطلب للمراجعة')}>إرسال الطلب</button>{msg && <p className="mu" role="status">{msg}</p>}</div>

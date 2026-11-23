@@ -20,3 +20,8 @@ export function CopyBtn({ text }: any) {
   const [ok, setOk] = useState(false)
   return <button className="btn o" onClick={async () => { try { await navigator.clipboard.writeText(text); setOk(true); setTimeout(() => setOk(false), 1500) } catch { prompt('انسخ الرابط', text) } }}>{ok ? 'تم النسخ ✓' : 'نسخ الرابط'}</button>
 }
+export function VerifySocial({ id }: any) {
+  const { busy, msg, run } = useRun(); const [code, setCode] = useState('')
+  return <div>{code ? <p className="mu">ضع هذا الكود في وصف (Bio) حسابك: <b dir="ltr" style={{ userSelect: 'all' }}>{code}</b><br />ثم انتظر مراجعة الإدارة. يمكنك حذفه بعد التوثيق.</p>
+    : <button className="btn o" disabled={busy} onClick={async () => { const { data, error } = await sbc.rpc('request_social_verification', { p_account: id }); if (error) alert(error.message); else setCode(data) }}>توثيق ملكية الحساب</button>}{msg && <p className="mu">{msg}</p>}</div>
+}

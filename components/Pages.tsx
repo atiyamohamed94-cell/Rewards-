@@ -1,6 +1,7 @@
 import { sb, egp, monthly } from '@/lib/server'
 import Bars from './Bars'
 import Link from 'next/link'
+import SocialList from './SocialList'
 import { MarkRead, ProfileForm, Avatar, Socials, Del, JoinBtn, ChatForm } from './Actions'
 export async function Notifications() {
   const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
@@ -16,7 +17,7 @@ export async function Profile({ kind }: any) {
   const { data: so } = await s.from('social_accounts').select('*').eq('user_id', user!.id)
   return <><h2>حسابي</h2>{p?.avatar_url && <img src={p.avatar_url} alt="" style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover' }} />}{kind === 'creator' && <p><Link className="btn o" href={'/kit/' + user!.id}>ملفي العام (Media Kit)</Link></p>}<p className="mu">{p?.email} · الدور: {p?.role} · التوثيق: {x?.verified ? 'موثّق ✓' : 'غير موثّق'}</p>
     <ProfileForm p={p} x={x || {}} kind={kind} /><Avatar uid={user!.id} />
-    <h3>الحسابات الاجتماعية</h3>{!so?.length && <p className="mu">لم تضف حسابات.</p>}{so?.map((a: any) => <div className="card row" key={a.id}><span>{a.platform} · {a.username}</span><Del table="social_accounts" id={a.id} /></div>)}<Socials uid={user!.id} /></>
+    <h3>الحسابات الاجتماعية</h3><SocialList uid={user!.id} /><Socials uid={user!.id} /></>
 }
 export async function Communities({ sp }: any) {
   const s = await sb(); const user = (await s.auth.getSession()).data.session?.user
