@@ -89,7 +89,7 @@ export function MarkRead({ id }: any) { const { busy, run } = useRun(); return <
 export function ProfileForm({ p, kind, x }: any) {
   const { busy, msg, run } = useRun(); const [f, setF] = useState<any>({ ...p, ...x }); const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value })
   const [a, b] = kind === 'advertiser' ? ['advertiser_profiles', { business_name: f.business_name, business_type: f.business_type, website: f.website }] : ['creator_profiles', { display_name: f.display_name, experience: f.experience, niches: f.niches || [] }]
-  return <div className="card"><h3>بياناتي</h3><label>الاسم</label><input defaultValue={f.full_name} onChange={set('full_name')} /><label>الهاتف</label><input defaultValue={f.phone} onChange={set('phone')} />
+  return <div className="card"><h3>بياناتي</h3><label>الاسم</label><input defaultValue={f.full_name} onChange={set('full_name')} /><label>رقم الهاتف (يظهر فقط للطرف الآخر في حملاتك والإدارة)</label><input defaultValue={f.phone} onChange={set('phone')} />
     <label>نبذة</label><textarea defaultValue={f.bio} onChange={set('bio')} />
     {kind === 'advertiser' ? <><label>اسم النشاط</label><input defaultValue={f.business_name} onChange={set('business_name')} /><label>نوع النشاط</label><input defaultValue={f.business_type} onChange={set('business_type')} /><label>الموقع</label><input defaultValue={f.website} onChange={set('website')} /></>
       : <><label>مجالات المحتوى (افصل بفاصلة)</label><input defaultValue={(f.niches || []).join(', ')} onChange={e => setF({ ...f, niches: e.target.value.split(',').map((x: string) => x.trim()).filter(Boolean) })} /><label>الاسم المعروض</label><input defaultValue={f.display_name} onChange={set('display_name')} /><label>الخبرة</label><textarea defaultValue={f.experience} onChange={set('experience')} /></>}
@@ -97,9 +97,14 @@ export function ProfileForm({ p, kind, x }: any) {
 }
 export function Avatar({ uid }: any) {
   const { busy, msg, run } = useRun()
-  return <div className="card"><h3>الصورة الشخصية</h3><input type="file" accept="image/*" disabled={busy} onChange={e => { const f = e.target.files?.[0]; if (!f) return
-    if (f.size > 2e6) return alert('الحد الأقصى 2MB'); run(async () => { const path = `${uid}/avatar`; const u = await sbc.storage.from('avatars').upload(path, f, { upsert: true }); if (u.error) return u
-      return sbc.from('profiles').update({ avatar_url: sbc.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?t=' + Date.now() }).eq('id', uid) }, 'تم الرفع') }} /><Msg m={msg} /></div>
+  return <div className="card"><h3>الصورة الشخصية</h3><input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e => { const f = e.target.files?.[0]; if (!f) return
+    if (f.size > 2e6) return alert('الحد الأقصى 2MB')
+    run(async () => { const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, ''); const path = `${uid}/${Date.now()}.${ext}`
+      const u = await sbc.storage.from('avatars').upload(path, f, { contentType: f.type }); if (u.error) return u
+      const url = sbc.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      const r = await sbc.from('profiles').update({ avatar_url: url }).eq('id', uid).select('id'); if (r.error) return r
+      if (!r.data?.length) return { error: { message: 'تعذّر حفظ رابط الصورة' } }
+      return r }, 'تم حفظ الصورة ✓') }} /><Msg m={msg} /></div>
 }
 export function Socials({ uid }: any) {
   const { busy, msg, run } = useRun(); const [pl, setPl] = useState('tiktok'); const [un, setUn] = useState(''); const [url, setUrl] = useState('')

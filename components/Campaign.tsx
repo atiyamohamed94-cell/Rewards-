@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { sb, egp } from '@/lib/server'
 import { JoinCampaign } from './CampClient'
 import { ReviewForm } from './FeatClient'
+import ContactBtn from './Contact'
+import AvatarImg from './AvatarImg'
 const ICON: any = { clipping: '✂️', ugc: '🎥', influencer: '⭐', posting: '📣' }
 const NAME: any = { clipping: 'Clipping', ugc: 'UGC', influencer: 'Influencer', posting: 'Posting' }
 export function Cover({ c, h = 150 }: any) {
@@ -14,6 +16,7 @@ export async function CampaignDetails({ id, role }: any) {
   const { data: c } = await s.from('campaigns').select('*').eq('id', id).maybeSingle()
   if (!c) return <div className="card mu">الحملة غير موجودة أو غير متاحة.</div>
   const r: any = c.requirements || {}
+  const { data: adv } = role === 'advertiser' ? { data: null } : await s.rpc('get_advertiser_card', { p_id: c.advertiser_id })
   const { data: rep } = await s.rpc('reputation', { p_user: c.advertiser_id })
   const { data: roster } = role !== 'creator' ? await s.rpc('campaign_roster', { p_campaign: id }) : { data: null }
   const [{ data: app }, { data: com }, { count }] = await Promise.all([
@@ -37,8 +40,9 @@ export async function CampaignDetails({ id, role }: any) {
     <List t="📁 الخامات" a={r.materials} /><List t="🎬 أمثلة مرجعية" a={r.examples} />
     {r.socials && Object.keys(r.socials).length > 0 && <div className="card"><b>صفحات البراند</b><div className="row" style={{ justifyContent: 'flex-start', marginTop: 8 }}>{Object.entries(r.socials).map(([k, u]: any) => <a key={k} className="btn o" href={u} target="_blank" rel="noopener noreferrer">{k}</a>)}</div></div>}
     {c.link && <p><a className="btn o" href={c.link} target="_blank" rel="noopener noreferrer">رابط إضافي</a></p>}
+    {adv && <div className="card"><h3>عن المعلن</h3><div style={{ display: 'flex', gap: 12, alignItems: 'center' }}><AvatarImg src={adv.avatar} size={56} emoji="🏢" /><div><b>{adv.business || adv.name}{adv.verified ? ' ✓' : ''}</b><p className="mu" style={{ margin: 0 }}>{adv.type}</p></div></div>{adv.bio && <p>{adv.bio}</p>}{adv.website && <p><a href={adv.website} target="_blank" rel="noopener noreferrer" dir="ltr">{adv.website}</a></p>}{(app?.status === 'accepted' || role === 'admin') && <ContactBtn user={c.advertiser_id} label="تواصل مع المعلن" />}</div>}
     {role === 'creator' && <div className="card">{app ? <><p><b>{app.status === 'accepted' ? '✓ أنت منضم لهذه الحملة' : app.status === 'pending' ? 'طلبك بانتظار موافقة المعلن' : 'لم يُقبل طلبك'}</b></p>
       {app.status === 'accepted' && <p className="row"><Link className="btn" href="/creator/submissions">سلّم محتوى</Link>{com && <Link className="btn o" href={`/creator/communities/${com.id}`}>شات الحملة</Link>}</p>}{app.status === 'accepted' && <ReviewForm campaign={id} reviewee={c.advertiser_id} label="قيّم المعلن" />}</>
       : c.status === 'active' ? <JoinCampaign id={id} /> : <p className="mu">الحملة غير نشطة حاليًا.</p>}</div>}
-    {role !== 'creator' && <div className="card"><h3>المبدعون المنضمون</h3>{!roster?.length && <p className="mu">لا يوجد منضمون بعد.</p>}{roster?.map((x: any) => <div key={x.creator_id} style={{ padding: '8px 0', borderTop: '1px solid var(--ln)' }}><div className="row"><Link href={`/kit/${x.creator_id}`}><b>{x.name}{x.verified ? ' ✓' : ''}</b></Link><span className="mu">{x.approved} فيديو مقبول</span></div>{x.my_rating ? <span className="badge">قيّمته: {x.my_rating}/5</span> : role === 'advertiser' && x.approved > 0 ? <ReviewForm campaign={id} reviewee={x.creator_id} label="قيّم المبدع" /> : null}</div>)}</div>}</>
+    {role !== 'creator' && <div className="card"><h3>المبدعون المنضمون</h3>{!roster?.length && <p className="mu">لا يوجد منضمون بعد.</p>}{roster?.map((x: any) => <div key={x.creator_id} style={{ padding: '8px 0', borderTop: '1px solid var(--ln)' }}><div className="row"><Link href={`/kit/${x.creator_id}`}><b>{x.name}{x.verified ? ' ✓' : ''}</b></Link><span className="mu">{x.approved} فيديو مقبول</span></div><ContactBtn user={x.creator_id} label="تواصل مع المبدع" />{x.my_rating ? <span className="badge">قيّمته: {x.my_rating}/5</span> : role === 'advertiser' && x.approved > 0 ? <ReviewForm campaign={id} reviewee={x.creator_id} label="قيّم المبدع" /> : null}</div>)}</div>}</>
 }

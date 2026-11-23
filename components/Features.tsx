@@ -3,12 +3,13 @@ import { headers } from 'next/headers'
 import { sb, egp } from '@/lib/server'
 import { levelOf } from '@/lib/levels'
 import { InviteBtn, CopyBtn } from './FeatClient'
+import AvatarImg from './AvatarImg'
 export async function Kit({ id }: any) {
   const s = await sb(); const { data: k } = await s.rpc('get_creator_kit', { p_id: id })
   if (!k) return <div className="card mu">الملف غير متاح. قد يلزمك تسجيل الدخول، أو أن المبدع غير موجود.</div>
   const { data: vs } = await s.rpc('creator_verified_socials', { p_creator: id }); const okset = new Set((vs || []).map((x: any) => x.platform + x.username))
   const { l, n } = levelOf(Number(k.views)); const star = k.rating?.n > 0
-  return <><div className="card" style={{ textAlign: 'center' }}>{k.avatar ? <img src={k.avatar} alt="" style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover' }} /> : <div className="avatar" style={{ width: 96, height: 96, margin: 'auto', fontSize: 40 }}>🎬</div>}
+  return <><div className="card" style={{ textAlign: 'center' }}><div style={{ display: 'flex', justifyContent: 'center' }}><AvatarImg src={k.avatar} size={96} emoji="🎬" /></div>
     <h2 style={{ marginBottom: 0 }}>{k.name}{k.verified ? ' ✓' : ''}</h2><p className="mu">{l.i} مستوى {l.ar}{star ? ` · ⭐ ${k.rating.avg} (${k.rating.n})` : ''}</p>
     <p>{(k.niches || []).map((x: string) => <span className="pill" key={x}>{x}</span>)}</p>{k.bio && <p>{k.bio}</p>}</div>
     <div className="grid"><div className="card"><div className="kpi g">{Number(k.views).toLocaleString('ar-EG')}</div><div className="mu">مشاهدات موثّقة</div></div><div className="card"><div className="kpi">{k.videos}</div><div className="mu">فيديو مقبول</div></div><div className="card"><div className="kpi">{k.campaigns}</div><div className="mu">حملة</div></div></div>
