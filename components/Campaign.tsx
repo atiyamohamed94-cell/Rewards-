@@ -15,7 +15,7 @@ export async function CampaignDetails({ id, role }: any) {
   if (!c) return <div className="card mu">الحملة غير موجودة أو غير متاحة.</div>
   const r: any = c.requirements || {}
   const { data: rep } = await s.rpc('reputation', { p_user: c.advertiser_id })
-  const { data: roster } = role === 'advertiser' ? await s.rpc('campaign_roster', { p_campaign: id }) : { data: null }
+  const { data: roster } = role !== 'creator' ? await s.rpc('campaign_roster', { p_campaign: id }) : { data: null }
   const [{ data: app }, { data: com }, { count }] = await Promise.all([
     s.from('campaign_applications').select('status').eq('campaign_id', id).eq('creator_id', user!.id).maybeSingle(),
     s.from('communities').select('id').eq('campaign_id', id).limit(1).maybeSingle(),
@@ -40,5 +40,5 @@ export async function CampaignDetails({ id, role }: any) {
     {role === 'creator' && <div className="card">{app ? <><p><b>{app.status === 'accepted' ? '✓ أنت منضم لهذه الحملة' : app.status === 'pending' ? 'طلبك بانتظار موافقة المعلن' : 'لم يُقبل طلبك'}</b></p>
       {app.status === 'accepted' && <p className="row"><Link className="btn" href="/creator/submissions">سلّم محتوى</Link>{com && <Link className="btn o" href={`/creator/communities/${com.id}`}>شات الحملة</Link>}</p>}{app.status === 'accepted' && <ReviewForm campaign={id} reviewee={c.advertiser_id} label="قيّم المعلن" />}</>
       : c.status === 'active' ? <JoinCampaign id={id} /> : <p className="mu">الحملة غير نشطة حاليًا.</p>}</div>}
-    {role === 'advertiser' && <div className="card"><h3>المبدعون المنضمون</h3>{!roster?.length && <p className="mu">لا يوجد منضمون بعد.</p>}{roster?.map((x: any) => <div key={x.creator_id} style={{ padding: '8px 0', borderTop: '1px solid var(--ln)' }}><div className="row"><Link href={`/kit/${x.creator_id}`}><b>{x.name}{x.verified ? ' ✓' : ''}</b></Link><span className="mu">{x.approved} فيديو مقبول</span></div>{x.my_rating ? <span className="badge">قيّمته: {x.my_rating}/5</span> : x.approved > 0 ? <ReviewForm campaign={id} reviewee={x.creator_id} label="قيّم المبدع" /> : null}</div>)}</div>}</>
+    {role !== 'creator' && <div className="card"><h3>المبدعون المنضمون</h3>{!roster?.length && <p className="mu">لا يوجد منضمون بعد.</p>}{roster?.map((x: any) => <div key={x.creator_id} style={{ padding: '8px 0', borderTop: '1px solid var(--ln)' }}><div className="row"><Link href={`/kit/${x.creator_id}`}><b>{x.name}{x.verified ? ' ✓' : ''}</b></Link><span className="mu">{x.approved} فيديو مقبول</span></div>{x.my_rating ? <span className="badge">قيّمته: {x.my_rating}/5</span> : role === 'advertiser' && x.approved > 0 ? <ReviewForm campaign={id} reviewee={x.creator_id} label="قيّم المبدع" /> : null}</div>)}</div>}</>
 }
