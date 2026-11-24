@@ -4,6 +4,7 @@ import { JoinCampaign } from './CampClient'
 import { ReviewForm } from './FeatClient'
 import ContactBtn from './Contact'
 import AvatarImg from './AvatarImg'
+import ShareCampaign from './ShareCampaign'
 const ICON: any = { clipping: '✂️', ugc: '🎥', influencer: '⭐', posting: '📣' }
 const NAME: any = { clipping: 'Clipping', ugc: 'UGC', influencer: 'Influencer', posting: 'Posting' }
 export function Cover({ c, h = 150 }: any) {
@@ -29,6 +30,7 @@ export async function CampaignDetails({ id, role }: any) {
   return <><Link href={`/${role}/campaigns`} className="mu">→ رجوع للحملات</Link>
     <Cover c={c} h={200} />
     <div className="row" style={{ marginTop: 12 }}><h2 style={{ margin: 0 }}>{c.title}</h2><span className="badge">{NAME[c.campaign_type]}</span></div><p className="mu">{c.brand_name}{rep?.[0]?.n > 0 && ` · ⭐ ${rep[0].avg_rating} (${rep[0].n})`}</p>
+    {c.status === 'active' && <div style={{ margin: '8px 0' }}><ShareCampaign id={c.id} title={c.title} /></div>}
     <div className="card"><p style={{ whiteSpace: 'pre-wrap' }}>{c.description}</p></div>
     <div className="card"><h3>المكافأة والميزانية</h3><Row t="المكافأة" v={reward(c)} />{Number(r.min_views) > 0 && <Row t="الحد الأدنى للمشاهدات لبدء الربح" v={Number(r.min_views).toLocaleString('ar-EG')} />}
       <Row t="الميزانية الإجمالية" v={egp(c.budget)} /><div className="bar" style={{ margin: '8px 0' }}><i style={{ width: pct + '%' }} /></div><p className="mu">تم صرف {pct}% من التمويل المتاح</p></div>
