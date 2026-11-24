@@ -23,9 +23,53 @@ export function SupportEdit({ current }: any) {
     <button className="btn" disabled={busy} onClick={() => { if (!/^01\d{9}$/.test(v.replace(/\s/g, ''))) return alert('رقم مصري من 11 رقمًا يبدأ بـ 01')
       run(() => sbc.from('platform_settings').upsert({ key: 'support_contact', value: v.replace(/\s/g, '') }, { onConflict: 'key' })) }}>حفظ</button>{msg && <p className="mu" role="status">{msg}</p>}</div>
 }
-export function ResolveBtn({ id }: any) {
-  const { busy, run } = useRun()
-  return <button className="btn o" disabled={busy} onClick={() => run(() => sbc.from('disputes').update({ status: 'resolved' }).eq('id', id), 'تم')}>تمت المعالجة</button>
+export function RoleChangeActions({ id }: { id: string }) {
+  const { busy, msg, run } = useRun()
+  const [note, setNote] = useState('')
+
+  const review = (decision: 'approved' | 'rejected') => {
+    const label = decision === 'approved' ? 'قبول الطلب' : 'رفض الطلب'
+    if (!confirm(`هل أنت متأكد من ${label}؟`)) return
+
+    run(
+      () => sbc.rpc('admin_review_role_change', {
+        p_request: id,
+        p_decision: decision,
+        p_note: note,
+      }),
+      decision === 'approved' ? 'تم قبول الطلب وتغيير نوع الحساب' : 'تم رفض الطلب'
+    )
+  }
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <textarea
+        placeholder="ملاحظة الإدارة (اختياري)"
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        disabled={busy}
+      />
+      <div className="row" style={{ gap: 10, marginTop: 10 }}>
+        <button
+          className="btn"
+          disabled={busy}
+          onClick={() => review('approved')}
+          style={{ background: '#16a34a', color: '#fff' }}
+        >
+          {busy ? 'جارٍ التنفيذ...' : '✓ قبول الطلب'}
+        </button>
+        <button
+          className="btn"
+          disabled={busy}
+          onClick={() => review('rejected')}
+          style={{ background: '#dc2626', color: '#fff' }}
+        >
+          {busy ? 'جارٍ التنفيذ...' : '✕ رفض الطلب'}
+        </button>
+      </div>
+      {msg && <p className="mu" role="status">{msg}</p>}
+    </div>
+  )
 }
 export function VerifyBtn({ id, role, on }: any) {
   const { busy, msg, run } = useRun(); const t = role === 'advertiser' ? 'advertiser_profiles' : 'creator_profiles'
