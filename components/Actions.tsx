@@ -88,19 +88,27 @@ export function TopUp({ uid, methods }: any) {
 export function MarkRead({ id }: any) { const { busy, run } = useRun(); return <button className="btn o" disabled={busy} onClick={() => run(() => sbc.from('notifications').update({ is_read: true }).eq('id', id))}>تم</button> }
 export function ProfileForm({ p, kind, x }: any) {
   const { busy, msg, run } = useRun(); const [f, setF] = useState<any>({ ...p, ...x }); const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value })
-  const [a, b] = kind === 'advertiser' ? ['advertiser_profiles', { business_name: f.business_name, business_type: f.business_type, website: f.website }] : ['creator_profiles', { display_name: f.display_name, experience: f.experience, niches: f.niches || [] }]
+  const [a, b] = kind === 'advertiser' ? ['advertiser_profiles', { business_name: f.business_name, business_type: f.business_type, website: f.website }] : ['creator_profiles', { display_name: f.full_name, experience: f.experience, niches: f.niches || [] }]
   return <div className="card"><h3>بياناتي</h3><label>الاسم</label><input defaultValue={f.full_name} onChange={set('full_name')} /><label>رقم الهاتف (يظهر فقط للطرف الآخر في حملاتك والإدارة)</label><input defaultValue={f.phone} onChange={set('phone')} />
     <label>نبذة</label><textarea defaultValue={f.bio} onChange={set('bio')} />
     {kind === 'advertiser' ? <><label>اسم النشاط</label><input defaultValue={f.business_name} onChange={set('business_name')} /><label>نوع النشاط</label><input defaultValue={f.business_type} onChange={set('business_type')} /><label>الموقع</label><input defaultValue={f.website} onChange={set('website')} /></>
-      : <><label>مجالات المحتوى (افصل بفاصلة)</label><input defaultValue={(f.niches || []).join(', ')} onChange={e => setF({ ...f, niches: e.target.value.split(',').map((x: string) => x.trim()).filter(Boolean) })} /><label>الاسم المعروض</label><input defaultValue={f.display_name} onChange={set('display_name')} /><label>الخبرة</label><textarea defaultValue={f.experience} onChange={set('experience')} /></>}
+      : <><label>مجالات المحتوى (افصل بفاصلة)</label><input defaultValue={(f.niches || []).join(', ')} onChange={e => setF({ ...f, niches: e.target.value.split(',').map((x: string) => x.trim()).filter(Boolean) })} /><label>الخبرة</label><textarea defaultValue={f.experience} onChange={set('experience')} /></>}
     <button className="btn" disabled={busy} onClick={() => run(async () => { const r = await sbc.from('profiles').update({ full_name: f.full_name, phone: f.phone, bio: f.bio }).eq('id', p.id); if (r.error) return r; return sbc.from(a).update(b).eq('user_id', p.id) }, 'تم الحفظ')}>حفظ</button><Msg m={msg} /></div>
+}
+async function shrink(f: File, max = 512): Promise<Blob> {
+  const bmp = await createImageBitmap(f)
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height))
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k)
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
+  return await new Promise<Blob>((ok, no) => c.toBlob(x => x ? ok(x) : no(new Error('x')), 'image/jpeg', 0.85))
 }
 export function Avatar({ uid }: any) {
   const { busy, msg, run } = useRun()
   return <div className="card"><h3>الصورة الشخصية</h3><input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e => { const f = e.target.files?.[0]; if (!f) return
-    if (f.size > 2e6) return alert('الحد الأقصى 2MB')
-    run(async () => { const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, ''); const path = `${uid}/${Date.now()}.${ext}`
-      const u = await sbc.storage.from('avatars').upload(path, f, { contentType: f.type }); if (u.error) return u
+    if (f.size > 25e6) return alert('الصورة كبيرة جدًا')
+    run(async () => { let blob: Blob; try { blob = await shrink(f) } catch { return { error: { message: 'تعذّر قراءة الصورة' } } }
+      const path = `${uid}/${Date.now()}.jpg`
+      const u = await sbc.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg' }); if (u.error) return u
       const url = sbc.storage.from('avatars').getPublicUrl(path).data.publicUrl
       const r = await sbc.from('profiles').update({ avatar_url: url }).eq('id', uid).select('id'); if (r.error) return r
       if (!r.data?.length) return { error: { message: 'تعذّر حفظ رابط الصورة' } }
