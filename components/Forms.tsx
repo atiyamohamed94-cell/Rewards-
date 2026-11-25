@@ -34,7 +34,7 @@ export function RoleChangeActions({ id }: { id: string }) {
     run(
       () => sbc.rpc('admin_review_role_change', {
         p_request: id,
-        p_decision: decision,
+        p_decision: decision === 'approved' ? 'approve' : 'reject',
         p_note: note,
       }),
       decision === 'approved' ? 'تم قبول الطلب وتغيير نوع الحساب' : 'تم رفض الطلب'
