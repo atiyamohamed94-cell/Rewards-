@@ -23,7 +23,7 @@ export default async function P({ params, searchParams }: any) {
   const pl = Array.isArray(c.platforms) ? c.platforms.join(' · ') : ''
   return <Public>
     <Cover c={c} h={200} />
-    <h2 style={{ marginTop: 12 }}>{c.title}</h2><p className="mu">{c.brand_name}{pl && ` · ${pl}`}</p>
+    <h2 style={{ marginTop: 12 }}>{c.title}</h2><p className="mu">{c.advertiser_id ? <Link href={`/brand/${c.advertiser_id}`}>{c.brand_name}</Link> : c.brand_name}{pl && ` · ${pl}`}</p>
     <div className="card"><p style={{ whiteSpace: 'pre-wrap' }}>{c.description}</p></div>
     <div className="card">{reward(c) && <p><span className="mu">المكافأة: </span>{reward(c)}</p>}
       {c.creators_needed > 0 && <p><span className="mu">عدد المبدعين المطلوب: </span>{c.creators_needed}</p>}
