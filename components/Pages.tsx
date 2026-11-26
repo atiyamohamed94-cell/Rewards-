@@ -16,7 +16,7 @@ export async function Profile({ kind }: any) {
   const { data: p } = await s.from('profiles').select('*').eq('id', user!.id).single()
   const { data: x } = await s.from(kind === 'advertiser' ? 'advertiser_profiles' : 'creator_profiles').select('*').eq('user_id', user!.id).maybeSingle()
   const { data: so } = await s.from('social_accounts').select('*').eq('user_id', user!.id)
-  return <><h2>حسابي</h2><AvatarImg src={p?.avatar_url} />{!p?.phone && <div className="card" style={{ borderColor: 'var(--o)' }}><b>أضف رقم هاتفك</b><p className="mu">مطلوب للانضمام للحملات أو تمويلها، ويظهر فقط للطرف الآخر في حملاتك والإدارة ليتواصل معك عند أي مشكلة.</p></div>}{kind === 'creator' && <p><Link className="btn o" href={'/kit/' + user!.id}>ملفي العام (Media Kit)</Link></p>}<p className="mu">{p?.email} · الدور: {p?.role} · التوثيق: {x?.verified ? 'موثّق ✓' : 'غير موثّق'}</p>
+  return <><h2>حسابي</h2><AvatarImg src={p?.avatar_url} />{!p?.phone && <div className="card" style={{ borderColor: 'var(--o)' }}><b>أضف رقم هاتفك</b><p className="mu">مطلوب للانضمام للحملات أو تمويلها، ويظهر فقط للطرف الآخر في حملاتك والإدارة ليتواصل معك عند أي مشكلة.</p></div>}{kind === 'creator' && <p><Link className="btn o" href={'/kit/' + user!.id}>ملفي العام (Media Kit)</Link></p>}{kind === 'advertiser' && <p><Link className="btn o" href={'/brand/' + user!.id}>صفحتي العامة</Link></p>}<p className="mu">{p?.email} · الدور: {p?.role} · التوثيق: {x?.verified ? 'موثّق ✓' : 'غير موثّق'}</p>
     <ProfileForm p={p} x={x || {}} kind={kind} /><Avatar uid={user!.id} />
     <h3>الحسابات الاجتماعية</h3><SocialList uid={user!.id} /><Socials uid={user!.id} /></>
 }
